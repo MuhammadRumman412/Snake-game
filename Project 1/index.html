@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Snake Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div id="app">
+        <!-- Left: Game Area -->
+        <div id="game-area">
+            <div id="score-board">
+                <div class="score-item">
+                    <span class="score-label">SCORE</span>
+                    <span id="score" class="score-value">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">HIGH SCORE</span>
+                    <span id="high-score" class="score-value">0</span>
+                </div>
+            </div>
+
+            <div id="canvas-wrap">
+                <canvas id="game-canvas"></canvas>
+                <div id="overlay">
+                    <div id="overlay-content">
+                        <h1 id="overlay-title">SNAKE</h1>
+                        <p id="overlay-message">Press Spacebar to start</p>
+                        <p id="overlay-sub" class="sub-text">Use Arrow Keys or WASD to move</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mobile-controls">
+                <button class="ctrl-btn" id="btn-up" aria-label="Up">&#9650;</button>
+                <div class="ctrl-row">
+                    <button class="ctrl-btn" id="btn-left" aria-label="Left">&#9668;</button>
+                    <button class="ctrl-btn" id="btn-down" aria-label="Down">&#9660;</button>
+                    <button class="ctrl-btn" id="btn-right" aria-label="Right">&#9658;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Settings Panel -->
+        <div id="settings-panel">
+            <h2 class="panel-title">Settings</h2>
+
+            <!-- Gameplay -->
+            <div class="setting-group">
+                <h3 class="group-title">Gameplay</h3>
+                <div class="setting-row">
+                    <label for="grid-size-select">Grid Size</label>
+                    <select id="grid-size-select">
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large" selected>Large</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="speed-slider">Speed</label>
+                    <div class="slider-wrap">
+                        <input type="range" id="speed-slider" min="1" max="5" value="3" step="1">
+                        <span id="speed-label" class="range-label">Normal</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label for="toggle-walls">Wall Wrap</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-walls" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label for="toggle-grid">Show Grid</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-grid" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Samosa Style -->
+            <div class="setting-group">
+                <h3 class="group-title">Samosa</h3>
+                <div class="setting-row">
+                    <label for="color-samosa">Color</label>
+                    <input type="color" id="color-samosa" value="#D4943A">
+                </div>
+                <div class="setting-row">
+                    <label for="color-samosa-crisp">Crispy Edge</label>
+                    <input type="color" id="color-samosa-crisp" value="#B8781E">
+                </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="setting-group">
+                <h3 class="group-title">Color Presets</h3>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="neon" title="Neon Green">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #00ff88, #0d0d0d)"></span>
+                        <span>Neon</span>
+                    </button>
+                    <button class="preset-btn" data-preset="cyber" title="Cyberpunk">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #ff00ff, #1a0a2e)"></span>
+                        <span>Cyber</span>
+                    </button>
+                    <button class="preset-btn" data-preset="ocean" title="Ocean">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #00d4ff, #0a1628)"></span>
+                        <span>Ocean</span>
+                    </button>
+                    <button class="preset-btn" data-preset="fire" title="Fire">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #ff6600, #1a0a00)"></span>
+                        <span>Fire</span>
+                    </button>
+                    <button class="preset-btn" data-preset="retro" title="Retro">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #33ff33, #000000)"></span>
+                        <span>Retro</span>
+                    </button>
+                    <button class="preset-btn" data-preset="pakistan" title="Pakistan">
+                        <span class="preset-swatch" style="background: linear-gradient(135deg, #01411C, #FFFFFF)"></span>
+                        <span>Pakistan</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="reset-btn" class="reset-button">Reset Defaults</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
