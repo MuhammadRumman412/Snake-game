@@ -6,14 +6,14 @@
     "use strict";
 
     // --- Constants ---
-    var CELL_SIZE = 20;
-    var GRID_SIZE = 25;   // Default: Large
-    var CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
-    var POINTS_PER_FOOD = 10;
-    var SPEED_STEP = 1;
+    const CELL_SIZE = 20;
+    const GRID_SIZE = 25;   // Default: Large
+    const CANVAS_SIZE = GRID_SIZE * CELL_SIZE;
+    const POINTS_PER_FOOD = 10;
+    const SPEED_STEP = 1;
 
     // --- Config ---
-    var config = {
+    const config = {
         showGrid: true,
         wallWrap: true,
         baseInterval: 125,
@@ -31,7 +31,7 @@
     };
 
     // Speed presets: [baseInterval, minInterval, label]
-    var speedPresets = {
+    const speedPresets = {
         1: [220, 150, "Slow"],
         2: [180, 120, "Easy"],
         3: [150, 95, "Normal"],
@@ -40,7 +40,7 @@
     };
 
     // Color presets
-    var colorPresets = {
+    const colorPresets = {
         neon: {
             snakeHead: "#00ff88", snakeBody: "#00cc6a", snakeGlow: "#00ff88",
             bg: "#0d0d0d", grid: "#161616", border: "#00ff88"
@@ -68,7 +68,7 @@
     };
 
     // --- Direction vectors ---
-    var DIR = {
+    const DIR = {
         UP:    { x:  0, y: -1 },
         DOWN:  { x:  0, y:  1 },
         LEFT:  { x: -1, y:  0 },
@@ -76,15 +76,15 @@
     };
 
     // --- Audio: beep via Web Audio API ---
-    var audioCtx = null;
+    let audioCtx = null;
 
     function playBeep() {
         // Create AudioContext lazily (browsers require user gesture)
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        var osc = audioCtx.createOscillator();
-        var gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
@@ -102,21 +102,21 @@
     function playHiss() {
         if (!audioCtx) return;
 
-        var bufferSize = audioCtx.sampleRate * 0.2; // 200ms hiss
-        var buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        var data = buffer.getChannelData(0);
-        for (var i = 0; i < bufferSize; i++) {
+        const bufferSize = audioCtx.sampleRate * 0.2; // 200ms hiss
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
             data[i] = Math.random() * 2 - 1;
         }
 
-        var noise = audioCtx.createBufferSource();
+        const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
 
-        var filter = audioCtx.createBiquadFilter();
+        const filter = audioCtx.createBiquadFilter();
         filter.type = "highpass";
         filter.frequency.setValueAtTime(5000, audioCtx.currentTime);
 
-        var gain = audioCtx.createGain();
+        const gain = audioCtx.createGain();
         gain.gain.setValueAtTime(0, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
@@ -132,8 +132,8 @@
     function playDeathSound() {
         if (!audioCtx) return;
 
-        var osc = audioCtx.createOscillator();
-        var gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
@@ -152,8 +152,8 @@
     function playTurnBeep() {
         if (!audioCtx) return;
 
-        var osc = audioCtx.createOscillator();
-        var gain = audioCtx.createGain();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
 
@@ -168,52 +168,52 @@
     }
 
     // --- DOM References ---
-    var canvas = document.getElementById("game-canvas");
-    var ctx = canvas.getContext("2d");
-    var scoreEl = document.getElementById("score");
-    var highScoreEl = document.getElementById("high-score");
-    var overlay = document.getElementById("overlay");
-    var overlayTitle = document.getElementById("overlay-title");
-    var overlayMessage = document.getElementById("overlay-message");
-    var overlaySub = document.getElementById("overlay-sub");
+    const canvas = document.getElementById("game-canvas");
+    const ctx = canvas.getContext("2d");
+    const scoreEl = document.getElementById("score");
+    const highScoreEl = document.getElementById("high-score");
+    const overlay = document.getElementById("overlay");
+    const overlayTitle = document.getElementById("overlay-title");
+    const overlayMessage = document.getElementById("overlay-message");
+    const overlaySub = document.getElementById("overlay-sub");
 
     // Settings DOM
-    var elGridSizeSelect = document.getElementById("grid-size-select");
-    var elToggleGrid = document.getElementById("toggle-grid");
-    var elToggleWalls = document.getElementById("toggle-walls");
-    var elSpeedSlider = document.getElementById("speed-slider");
-    var elSpeedLabel = document.getElementById("speed-label");
-    var elColorSamosa = document.getElementById("color-samosa");
-    var elColorSamosaCrisp = document.getElementById("color-samosa-crisp");
-    var elResetBtn = document.getElementById("reset-btn");
+    const elGridSizeSelect = document.getElementById("grid-size-select");
+    const elToggleGrid = document.getElementById("toggle-grid");
+    const elToggleWalls = document.getElementById("toggle-walls");
+    const elSpeedSlider = document.getElementById("speed-slider");
+    const elSpeedLabel = document.getElementById("speed-label");
+    const elColorSamosa = document.getElementById("color-samosa");
+    const elColorSamosaCrisp = document.getElementById("color-samosa-crisp");
+    const elResetBtn = document.getElementById("reset-btn");
 
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
 
     // --- Game State ---
-    var snake, prevSnake, direction, food, score, highScore;
-    var visualDirection, inputQueue = [];
-    var gameState;
-    var lastTick, tickInterval;
-    var animFrame;
-    var foodPulse = 0;
+    let snake, prevSnake, direction, food, score, highScore;
+    let visualDirection, inputQueue = [];
+    let gameState;
+    let lastTick, tickInterval;
+    let animFrame;
+    let foodPulse = 0;
 
 
     // --- Ambient Background Snake (Exact Game Style) ---
-    var bgCanvas = document.getElementById("bg-canvas");
-    var bgCtx = bgCanvas ? bgCanvas.getContext("2d") : null;
+    const bgCanvas = document.getElementById("bg-canvas");
+    const bgCtx = bgCanvas ? bgCanvas.getContext("2d") : null;
 
-    var BG_CELL_SIZE = 22;
-    var bgSnakes = [];
+    const BG_CELL_SIZE = 22;
+    let bgSnakes = [];
 
     function createBgSnake() {
-        var length = 15 + Math.floor(Math.random() * 15);
-        var startGy = Math.floor(Math.random() * (window.innerHeight / BG_CELL_SIZE));
-        var startGx = Math.floor(Math.random() * (window.innerWidth / BG_CELL_SIZE));
-        var body = [];
-        var dir = { x: 1, y: 0 };
+        const length = 15 + Math.floor(Math.random() * 15);
+        const startGy = Math.floor(Math.random() * (window.innerHeight / BG_CELL_SIZE));
+        const startGx = Math.floor(Math.random() * (window.innerWidth / BG_CELL_SIZE));
+        const body = [];
+        const dir = { x: 1, y: 0 };
 
-        for (var i = 0; i < length; i++) {
+        for (let i = 0; i < length; i++) {
             body.push({ x: startGx - i, y: startGy });
         }
 
@@ -239,7 +239,7 @@
         window.addEventListener("resize", resizeBgCanvas);
 
         bgSnakes = [];
-        for (var i = 0; i < 2; i++) {
+        for (let i = 0; i < 2; i++) {
             bgSnakes.push(createBgSnake());
         }
 
@@ -249,10 +249,10 @@
     function updateBgSnake(timestamp) {
         if (!bgCanvas || !bgCtx) return;
 
-        var w = bgCanvas.width;
-        var h = bgCanvas.height;
-        var cols = Math.ceil(w / BG_CELL_SIZE) + 4;
-        var rows = Math.ceil(h / BG_CELL_SIZE);
+        const w = bgCanvas.width;
+        const h = bgCanvas.height;
+        const cols = Math.ceil(w / BG_CELL_SIZE) + 4;
+        const rows = Math.ceil(h / BG_CELL_SIZE);
 
         bgCtx.clearRect(0, 0, w, h);
 
@@ -262,21 +262,33 @@
 
                 // Randomly turn or steer near edges
                 bgSnake.turnTimer++;
-                var head = bgSnake.body[0];
+                const head = bgSnake.body[0];
 
                 if (bgSnake.turnTimer > 4 + Math.floor(Math.random() * 8)) {
                     bgSnake.turnTimer = 0;
-                    var possibleDirs = [];
+                    const possibleDirs = [];
 
                     if (bgSnake.dir.x !== 0) {
-                        possibleDirs = [{ x: 0, y: -1 }, { x: 0, y: 1 }];
+                        possibleDirs.push({ x: 0, y: -1 }, { x: 0, y: 1 });
                         // Prefer direction towards center if near edge
-                        if (head.y < 3) possibleDirs = [{ x: 0, y: 1 }];
-                        if (head.y > rows - 4) possibleDirs = [{ x: 0, y: -1 }];
+                        if (head.y < 3) {
+                            bgSnake.dir = { x: 0, y: 1 };
+                            return;
+                        }
+                        if (head.y > rows - 4) {
+                            bgSnake.dir = { x: 0, y: -1 };
+                            return;
+                        }
                     } else {
-                        possibleDirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }];
-                        if (head.x < 3) possibleDirs = [{ x: 1, y: 0 }];
-                        if (head.x > cols - 5) possibleDirs = [{ x: -1, y: 0 }];
+                        possibleDirs.push({ x: 1, y: 0 }, { x: -1, y: 0 });
+                        if (head.x < 3) {
+                            bgSnake.dir = { x: 1, y: 0 };
+                            return;
+                        }
+                        if (head.x > cols - 5) {
+                            bgSnake.dir = { x: -1, y: 0 };
+                            return;
+                        }
                     }
 
                     // 60% chance to turn
@@ -286,7 +298,7 @@
                 }
 
                 // Calculate new head
-                var nextHead = {
+                const nextHead = {
                     x: head.x + bgSnake.dir.x,
                     y: head.y + bgSnake.dir.y
                 };
@@ -304,11 +316,11 @@
             }
 
             // Draw background snake using exact game snake roundRect style
-            for (var j = bgSnake.body.length - 1; j >= 0; j--) {
-                var seg = bgSnake.body[j];
-                var px = seg.x * BG_CELL_SIZE;
-                var py = seg.y * BG_CELL_SIZE;
-                var pad = 1;
+            for (let j = bgSnake.body.length - 1; j >= 0; j--) {
+                const seg = bgSnake.body[j];
+                const px = seg.x * BG_CELL_SIZE;
+                const py = seg.y * BG_CELL_SIZE;
+                const pad = 1;
 
                 bgCtx.save();
                 if (j === 0) {
@@ -320,7 +332,7 @@
                     bgCtx.fill();
                 } else {
                     // Body - exact game body style & gradient
-                    var alpha = 0.4 + 0.6 * ((bgSnake.body.length - j) / bgSnake.body.length);
+                    const alpha = 0.4 + 0.6 * ((bgSnake.body.length - j) / bgSnake.body.length);
                     bgCtx.fillStyle = config.colors.snakeBody;
                     bgCtx.globalAlpha = alpha;
                     roundRect(bgCtx, px + pad, py + pad, BG_CELL_SIZE - pad * 2, BG_CELL_SIZE - pad * 2, 2);
@@ -346,7 +358,7 @@
     }
 
     function resetGame() {
-        var mid = Math.floor(GRID_SIZE / 2);
+        const mid = Math.floor(GRID_SIZE / 2);
         snake = [
             { x: mid, y: mid },
             { x: mid - 1, y: mid },
@@ -357,7 +369,7 @@
         visualDirection = DIR.RIGHT;
         score = 0;
         scoreEl.textContent = "0";
-        var sp = speedPresets[parseInt(elSpeedSlider.value)] || speedPresets[3];
+        const sp = speedPresets[parseInt(elSpeedSlider.value)] || speedPresets[3];
         config.baseInterval = sp[0];
         config.minInterval = sp[1];
         tickInterval = config.baseInterval;
@@ -366,12 +378,12 @@
 
     // --- Food ---
     function placeFood() {
-        var occupied = {};
-        for (var i = 0; i < snake.length; i++) {
+        const occupied = {};
+        for (let i = 0; i < snake.length; i++) {
             occupied[snake[i].x + "," + snake[i].y] = true;
         }
-        var pos;
-        var attempts = 0;
+        let pos;
+        let attempts = 0;
         do {
             pos = {
                 x: Math.floor(Math.random() * GRID_SIZE),
@@ -418,7 +430,7 @@
 
         // Process the next buffered input from the queue
         if (inputQueue.length > 0) {
-            var newDir = inputQueue.shift();
+            const newDir = inputQueue.shift();
             if (newDir.x !== direction.x || newDir.y !== direction.y) {
                 playTurnBeep();
             }
@@ -426,7 +438,7 @@
             visualDirection = direction;
         }
 
-        var head = {
+        const head = {
             x: snake[0].x + direction.x,
             y: snake[0].y + direction.y,
         };
@@ -443,7 +455,7 @@
             }
         }
 
-        for (var i = 0; i < snake.length; i++) {
+        for (let i = 0; i < snake.length; i++) {
             if (snake[i].x === head.x && snake[i].y === head.y) {
                 gameOver();
                 return;
@@ -475,24 +487,24 @@
 
     // --- Draw Samosa ---
     function drawSamosa(cx, cy, size) {
-        var s = size * 0.45;
+        const s = size * 0.45;
         ctx.save();
 
         foodPulse += 0.05;
-        var bounceOffset = Math.sin(foodPulse) * 4;
-        var currentCy = cy + bounceOffset;
+        const bounceOffset = Math.sin(foodPulse) * 4;
+        const currentCy = cy + bounceOffset;
 
-        var glowSize = 8 + Math.sin(foodPulse) * 4;
+        const glowSize = 8 + Math.sin(foodPulse) * 4;
         ctx.shadowColor = "rgba(212, 148, 58, 0.6)";
         ctx.shadowBlur = glowSize;
 
         // Steam Effect
         ctx.shadowBlur = 0;
-        for (var i = 0; i < 3; i++) {
-            var steamOffset = (foodPulse * 0.5) + (i * 1.2);
-            var steamY = (steamOffset % 2) * 15;
-            var steamX = Math.sin(foodPulse + i) * 5;
-            var alpha = 1 - (steamY / 30);
+        for (let i = 0; i < 3; i++) {
+            const steamOffset = (foodPulse * 0.5) + (i * 1.2);
+            const steamY = (steamOffset % 2) * 15;
+            const steamX = Math.sin(foodPulse + i) * 5;
+            const alpha = 1 - (steamY / 30);
 
             ctx.beginPath();
             ctx.fillStyle = "rgba(255, 255, 255, " + (alpha * 0.3) + ")";
@@ -508,7 +520,7 @@
         ctx.bezierCurveTo(cx + s * 1.1, currentCy + s * 0.5, cx + s * 0.6, currentCy - s * 0.2, cx, currentCy - s); // Right side
         ctx.closePath();
 
-        var grad = ctx.createLinearGradient(cx - s, currentCy - s, cx + s, currentCy + s);
+        const grad = ctx.createLinearGradient(cx - s, currentCy - s, cx + s, currentCy + s);
         grad.addColorStop(0, config.colors.samosa);
         grad.addColorStop(0.6, config.colors.samosaCrisp);
         grad.addColorStop(1, config.colors.samosa);
@@ -536,11 +548,11 @@
         ctx.beginPath();
         ctx.strokeStyle = "rgba(180,120,30,0.5)";
         ctx.lineWidth = 0.5;
-        var crimpCount = 3;
-        for (var i = 1; i <= crimpCount; i++) {
-            var t = i / (crimpCount + 1);
-            var lx = cx + (cx - s * 0.9 - cx) * t;
-            var ly = (currentCy - s) + ((currentCy + s * 0.7) - (currentCy - s)) * t;
+        const crimpCount = 3;
+        for (let i = 1; i <= crimpCount; i++) {
+            const t = i / (crimpCount + 1);
+            const lx = cx + (cx - s * 0.9 - cx) * t;
+            const ly = (currentCy - s) + ((currentCy + s * 0.7) - (currentCy - s)) * t;
             ctx.moveTo(lx - 1, ly - 1);
             ctx.lineTo(lx + 1, ly + 1);
         }
@@ -550,7 +562,6 @@
     }
 
     // --- Drawing ---
-    // --- Drawing ---
     function draw(timestamp) {
         ctx.fillStyle = config.colors.bg;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -558,8 +569,8 @@
         if (config.showGrid) {
             ctx.strokeStyle = config.colors.grid;
             ctx.lineWidth = 0.5;
-            for (var i = 1; i < GRID_SIZE; i++) {
-                var pos = i * CELL_SIZE;
+            for (let i = 1; i < GRID_SIZE; i++) {
+                const pos = i * CELL_SIZE;
                 ctx.beginPath();
                 ctx.moveTo(pos, 0);
                 ctx.lineTo(pos, CANVAS_SIZE);
@@ -572,25 +583,25 @@
         }
 
         if (food) {
-            var fx = food.x * CELL_SIZE + CELL_SIZE / 2;
-            var fy = food.y * CELL_SIZE + CELL_SIZE / 2;
+            const fx = food.x * CELL_SIZE + CELL_SIZE / 2;
+            const fy = food.y * CELL_SIZE + CELL_SIZE / 2;
             drawSamosa(fx, fy, CELL_SIZE);
         }
 
         // --- Smooth Snake Rendering ---
-        var t = 0;
+        let t = 0;
         if (gameState === "playing" && lastTick) {
             t = (timestamp - lastTick) / tickInterval;
             if (t > 1) t = 1;
         }
 
-        var visualPoints = [];
-        for (var j = 0; j < snake.length; j++) {
-            var curr = snake[j];
-            var prev = (prevSnake && prevSnake[j]) ? prevSnake[j] : curr;
+        const visualPoints = [];
+        for (let j = 0; j < snake.length; j++) {
+            const curr = snake[j];
+            const prev = (prevSnake && prevSnake[j]) ? prevSnake[j] : curr;
 
-            var vx = prev.x;
-            var vy = prev.y;
+            let vx = prev.x;
+            let vy = prev.y;
 
             if (config.wallWrap) {
                 if (Math.abs(curr.x - prev.x) > 1) {
@@ -603,8 +614,8 @@
                 }
             }
 
-            var interpX = (vx + (curr.x - vx) * t) * CELL_SIZE + CELL_SIZE / 2;
-            var interpY = (vy + (curr.y - vy) * t) * CELL_SIZE + CELL_SIZE / 2;
+            const interpX = (vx + (curr.x - vx) * t) * CELL_SIZE + CELL_SIZE / 2;
+            const interpY = (vy + (curr.y - vy) * t) * CELL_SIZE + CELL_SIZE / 2;
             visualPoints.push({ x: interpX, y: interpY });
         }
 
@@ -619,12 +630,12 @@
             ctx.beginPath();
             ctx.moveTo(visualPoints[0].x, visualPoints[0].y);
 
-            for (var k = 1; k < visualPoints.length; k++) {
-                var p1 = visualPoints[k - 1];
-                var p2 = visualPoints[k];
+            for (let k = 1; k < visualPoints.length; k++) {
+                const p1 = visualPoints[k - 1];
+                const p2 = visualPoints[k];
 
                 if (config.wallWrap) {
-                    var dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+                    const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
                     if (dist > CANVAS_SIZE / 2) {
                         ctx.stroke();
                         ctx.beginPath();
@@ -635,11 +646,11 @@
 
                 // Use quadratic curves for all but the last segment to smooth out turns
                 if (k < visualPoints.length - 1) {
-                    var p3 = visualPoints[k + 1];
-                    var midX = (p2.x + p3.x) / 2;
-                    var midY = (p2.y + p3.y) / 2;
+                    const p3 = visualPoints[k + 1];
+                    const midX = (p2.x + p3.x) / 2;
+                    const midY = (p2.y + p3.y) / 2;
 
-                    var distNext = config.wallWrap ?
+                    const distNext = config.wallWrap ?
                         Math.sqrt(Math.pow(p3.x - p2.x, 2) + Math.pow(p3.y - p2.y, 2)) : 0;
 
                     if (distNext < CANVAS_SIZE / 2) {
@@ -657,11 +668,11 @@
 
         // Draw Head
         if (visualPoints.length > 0) {
-            var headPos = visualPoints[0];
+            const headPos = visualPoints[0];
             ctx.save();
             ctx.translate(headPos.x, headPos.y);
 
-            var faceAngle = 0;
+            let faceAngle = 0;
             if (visualDirection.x === 1) faceAngle = 0;
             else if (visualDirection.y === 1) faceAngle = Math.PI / 2;
             else if (visualDirection.x === -1) faceAngle = Math.PI;
@@ -677,8 +688,8 @@
             ctx.shadowBlur = 0;
 
             // Tongue Animation
-            var tongueLen = 0;
-            var flickCycle = (foodPulse * 1.5) % (Math.PI * 2);
+            let tongueLen = 0;
+            const flickCycle = (foodPulse * 1.5) % (Math.PI * 2);
 
             // Quick flick: tongue comes out rapidly and retracts
             if (flickCycle < 0.6) {
@@ -697,7 +708,7 @@
                 ctx.stroke();
 
                 // More organic forked end
-                var forkSize = tongueLen * 0.2;
+                const forkSize = tongueLen * 0.2;
                 ctx.beginPath();
                 ctx.moveTo(10 + tongueLen, 0);
                 ctx.quadraticCurveTo(10 + tongueLen + 2, -forkSize, 12 + tongueLen, -forkSize);
@@ -725,9 +736,9 @@
     }
 
     function hexToRgba(hex, alpha) {
-        var r = parseInt(hex.slice(1, 3), 16);
-        var g = parseInt(hex.slice(3, 5), 16);
-        var b = parseInt(hex.slice(5, 7), 16);
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
         return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
     }
 
@@ -756,7 +767,7 @@
     // --- Input: Keyboard ---
     function handleDirection(newDir) {
         // Check against the last direction in the queue, or current direction if queue is empty
-        var lastDir = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : direction;
+        const lastDir = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : direction;
         if (newDir.x + lastDir.x === 0 && newDir.y + lastDir.y === 0) return;
 
         // Buffer the input to eliminate latency and allow rapid turns
@@ -789,7 +800,7 @@
     });
 
     // --- Input: Mobile Buttons ---
-    var btnMap = {
+    const btnMap = {
         "btn-up":    DIR.UP,
         "btn-down":  DIR.DOWN,
         "btn-left":  DIR.LEFT,
@@ -797,8 +808,8 @@
     };
 
     Object.keys(btnMap).forEach(function(id) {
-        var dir = btnMap[id];
-        var btn = document.getElementById(id);
+        const dir = btnMap[id];
+        const btn = document.getElementById(id);
         btn.addEventListener("touchstart", function(e) {
             e.preventDefault();
             if (gameState === "start" || gameState === "gameover") {
@@ -816,7 +827,7 @@
     });
 
     // --- Input: Swipe ---
-    var touchStartX = 0, touchStartY = 0;
+    let touchStartX = 0, touchStartY = 0;
 
     canvas.addEventListener("touchstart", function(e) {
         if (gameState === "start" || gameState === "gameover") {
@@ -824,7 +835,7 @@
             e.preventDefault();
             return;
         }
-        var touch = e.touches[0];
+        const touch = e.touches[0];
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
         e.preventDefault();
@@ -832,12 +843,12 @@
 
     canvas.addEventListener("touchend", function(e) {
         if (gameState !== "playing") return;
-        var touch = e.changedTouches[0];
-        var dx = touch.clientX - touchStartX;
-        var dy = touch.clientY - touchStartY;
-        var absDx = Math.abs(dx);
-        var absDy = Math.abs(dy);
-        var MIN_SWIPE = 20;
+        const touch = e.changedTouches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+        const MIN_SWIPE = 20;
         if (Math.max(absDx, absDy) < MIN_SWIPE) return;
         if (absDx > absDy) {
             handleDirection(dx > 0 ? DIR.RIGHT : DIR.LEFT);
@@ -861,7 +872,7 @@
 
     // --- Settings Listeners ---
     elGridSizeSelect.addEventListener("change", function() {
-        var val = elGridSizeSelect.value;
+        const val = elGridSizeSelect.value;
         if (val === "small") GRID_SIZE = 15;
         else if (val === "medium") GRID_SIZE = 20;
         else GRID_SIZE = 25;
@@ -885,8 +896,8 @@
     });
 
     elSpeedSlider.addEventListener("input", function() {
-        var val = parseInt(elSpeedSlider.value);
-        var sp = speedPresets[val] || speedPresets[3];
+        const val = parseInt(elSpeedSlider.value);
+        const sp = speedPresets[val] || speedPresets[3];
         elSpeedLabel.textContent = sp[2];
         config.baseInterval = sp[0];
         config.minInterval = sp[1];
@@ -903,11 +914,11 @@
     });
 
     // Presets
-    var presetBtns = document.querySelectorAll(".preset-btn");
+    const presetBtns = document.querySelectorAll(".preset-btn");
     presetBtns.forEach(function(btn) {
         btn.addEventListener("click", function() {
-            var name = btn.getAttribute("data-preset");
-            var p = colorPresets[name];
+            const name = btn.getAttribute("data-preset");
+            const p = colorPresets[name];
             if (!p) return;
 
             presetBtns.forEach(function(b) { b.classList.remove("active"); });

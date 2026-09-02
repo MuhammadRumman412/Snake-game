@@ -3,7 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Snake Game</title>
+    <title>Samosa Snake - Smooth Arcade Action</title>
+    <meta name="description" content="A polished, high-performance Snake game with custom color presets, samosa-themed food, and mobile support.">
+    <meta name="theme-color" content="#00ff88">
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/528/528105.png">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://samosa-snake.vercel.app/">
+    <meta property="og:title" content="Samosa Snake - Smooth Arcade Action">
+    <meta property="og:description" content="Play the most delicious snake game on the web!">
+    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/528/528105.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://samosa-snake.vercel.app/">
+    <meta property="twitter:title" content="Samosa Snake - Smooth Arcade Action">
+    <meta property="twitter:description" content="Play the most delicious snake game on the web!">
+    <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/528/528105.png">
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -130,5 +151,14 @@
     </div>
 
     <script src="game.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered:', reg))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>
